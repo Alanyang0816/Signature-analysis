@@ -8,7 +8,9 @@ var s7 = require('./data7.js');
 var s8 = require('./data8.js');
 var s9 = require('./data9.js');
 var s10 = require('./data10.js');
+var input = require('./input.js');
 
+// length of Diagonal of boudning box
 function lengthOfDiagonal(x,y,time) {
     xmax=-1*Math.pow(10, 10);
     ymax=-1*Math.pow(10, 10);
@@ -31,7 +33,7 @@ function lengthOfDiagonal(x,y,time) {
     diagnonal = Math.sqrt(Math.pow((ymax-ymin),2)+Math.pow((xmax-xmin),2))
     return diagnonal;
 }
-
+// angle of Diagonal of boudning box
 function diagonalAngle(x,y,time) {
     xmax=-1*Math.pow(10, 10);
     ymax=-1*Math.pow(10, 10);
@@ -55,10 +57,12 @@ function diagonalAngle(x,y,time) {
     return diagnonal_angle;
 }
 
+
+//max Speed of this stroke
 function maxSpeed(x,y,time){
     max_speed = 1
     for (let i = 0; i < x.length - 1; i++) {
-        speed = (Math.pow((x[i+1] - x[i]),2)+Math.pow((y[i+1] - y[i]),2))/Math.pow((time[i+1] - time[i]),2)
+        speed = (Math.pow((x[i+1] - x[i-1]),2)+Math.pow((y[i+1] - y[i-1]),2))/Math.pow((time[i+1] - time[i-1]),2)
         if (speed < 10000000000 && max_speed <  speed){
             max_speed = speed
         }
@@ -66,22 +70,28 @@ function maxSpeed(x,y,time){
     return max_speed;
 }
 
+//max Speed divide by length of diagonal to know the max relative speed
 function maxRelativeSpeed(x,y,time){
     return maxSpeed(x,y,time) / (lengthOfDiagonal(x,y,time))
 }
 
+//average speed 
 function averageSpeed(x,y,time) {
     return lengthOfStroke(x,y,time) / totalTime(x,y,time);
 }
 
+//average Speed divide by length of diagonal to know the average relative speed
 function averageRelativeSpeed(x,y,time){
     return averageSpeed(x,y,time) / lengthOfDiagonal(x,y,time)
 }
+
+//stroke total time
 function totalTime(x,y,time) {
     total_time = time[time.length - 1]- time[0]
         return total_time;
 }
 
+//length of sorke
 function lengthOfStroke(x,y,time){
     sum = 0
     for(let i = 0;i < x.length - 1; i++){
@@ -102,11 +112,13 @@ function midPartAverageSpeed(x,y,time) {
     part_average_speed = part_length / (time[part2_l] - (time[part1_l]))
         return part_average_speed
 }
-
+//divided by length of diagonal to calculate relative average mid part speed
 function midPartRelativeAverageSpeed(x,y,time){
     return midPartAverageSpeed(x,y,time)/lengthOfDiagonal(x,y,time)
 }
 
+
+//calculate which part(0-99) has high speed(over double of average)
 function highSpeedPoints(x,y,time){
     let output= []
     let tem = []
@@ -118,6 +130,9 @@ function highSpeedPoints(x,y,time){
     }
     return output
 }
+
+
+let match_point = 0
 let hs1= highSpeedPoints(s1.x,s1.y,s1.time)
 let hs2= highSpeedPoints(s2.x,s2.y,s2.time)
 let hs3= highSpeedPoints(s3.x,s3.y,s3.time)
@@ -147,6 +162,16 @@ let tem_point = 0
         tem_point = 0
     }
 
+
+
+
+if(match_point>10)
+    console.log("Your signature has been verified")
+else
+    console.log("Your signature can not be verified, you can try to use message or answer security questions to verify your identity ")
+
+
 console.log(mergeHighSpeedPoints)
+console.log(highSpeedPoints(input.x,input.y,input.time))
 
 
