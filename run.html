@@ -1,0 +1,281 @@
+<html>
+  <head>
+    <title>Homework 3</title>
+    <script src="http://code.jquery.com/jquery-latest.js"></script>
+	<script src="js/paper-full.js"></script>
+	<!--Fonts and styling-->
+	<link href="css/style.css" rel='stylesheet' type='text/css'/>
+   
+   
+  </head>
+<body>	
+	<script type="text/paperscript" canvas="canvas">
+
+var s1 = require('./data1.js');
+var s2 = require('./data2.js');
+var s3 = require('./data3.js');
+var s4 = require('./data4.js');
+var s5 = require('./data5.js');
+var s6 = require('./data6.js');
+var s7 = require('./data7.js');
+var s8 = require('./data8.js');
+var s9 = require('./data9.js');
+var s10 = require('./data10.js');
+
+
+var strokes = [];
+var time = [];
+var x = [];
+var y = [];
+
+					
+function onMouseDown(event) {
+	path = new Path();
+	path.strokeColor = 'black';
+	path.strokeWidth = 2;
+	path.add(event.point);
+}
+
+function onMouseDrag(event) {
+	path.add(event.point);
+	var date = new Date();
+	var timesample = date.getTime();
+
+	x.push(event.point.x);
+	y.push(event.point.y);
+	time.push(timesample);	
+}
+
+function onMouseUp(event) {
+	DetectionFunction()
+	x=[]
+	y=[]
+	time=[]
+}
+
+
+function DetectionFunction(){
+	
+	diag = diag_len()
+	
+	stroke = to_stroke(diag)
+    stroke = resample(stroke);
+	segments = segment(stroke)
+	
+	
+	//norm_stroke = normalise(stroke,diag)
+	
+	no_of_segments = segments.length
+	
+	avg_v = avg_speed(segments)
+
+	ratio_angles_seg = get_seg_ang(segments)
+
+	ratio_angles = Math.abs(total_abs_angle(stroke)/(total_angle(stroke)+0.1))
+
+	console.log(no_of_segments,avg_v,ratio_angles, ratio_angles_seg)
+	
+
+}
+
+function diag_len(){
+    maxx = Math.max(x)
+    maxy = Math.max(y)
+    minx = Math.min(x)
+    miny = Math.min(y)
+    diag = Math.atan((maxy-miny)/(maxx-minx))
+    return diag+0.001;
+}
+
+function get_seg_ang(segments){
+	arr = []
+    for(ii=0;ii<segments.length;ii++){
+		xx = segments[ii]
+		a1 = total_angle(xx)
+		a2 = total_abs_angle(xx)
+		arr.push((a2+0.001)/(a1+0.01))
+    }
+	
+	return arr;
+}
+
+function theta(stroke, i){
+    dx = stroke[i+1].x - stroke[i].x;
+    dy = stroke[i+1].y - stroke[i].y;
+    d_x = stroke[i].x - stroke[i-1].x;
+    d_y = stroke[i].y - stroke[i-1].y;
+
+    return Math.atan((dx*d_y - d_x*dy + 0.00001)/(dx*d_x + dy*d_y + 0.00001));
+}
+
+
+function total_angle(stroke){
+    ang = 0;
+    for(i=1;i<stroke.length-1;i++){
+        ang = ang + theta(stroke,i);
+    }
+    return ang;
+}
+
+function total_abs_angle(stroke){
+    ang = 0;
+    for(i=1;i<stroke.length-1;i++){
+        ang = ang + Math.abs(theta(stroke,i));
+    }
+    return ang;
+}
+
+
+function total_time11(stroke){
+    return stroke[stroke.length - 1].time - stroke[0].time;
+}
+
+function distance11(stroke){
+	dist = 0.001;
+    for(i=1;i<stroke.length;i++){
+        dist = dist + Math.sqrt(Math.pow(stroke[i].x-stroke[i-1].x,2)+(Math.pow(stroke[i].y-stroke[i-1].y,2)));
+	}
+	return dist
+}
+
+function avg_speed(segments){
+	arr = []
+    for(ii=0;ii<segments.length;ii++){
+		xx = segments[ii]
+		dist = distance11(xx)
+		tt = total_time11(xx)
+		arr.push((dist+0.001)/(tt+0.01))
+    }
+	
+	return arr;
+}
+
+
+function to_stroke(){
+    stroke= []
+    for(i=0;i<x.length;i++){
+        a={x:x[i],y:y[i],time:time[i]}
+        stroke.push(a)
+	}
+	return stroke
+}
+
+function segment(stroke) { 
+    if(stroke.length<=2){
+        return [stroke];
+	}
+    // return [stroke];
+    var suball = [];
+    var sub = [stroke[0]];
+    var speed = 2, max_curve=2/3;
+    var i=speed;
+    var flag=1;
+    while(flag && i<stroke.length-speed){
+        sub.push(stroke[i]);
+        var vx = stroke[i].x - stroke[i-speed].x;
+        var vy = stroke[i].y - stroke[i-speed].y;
+        var dir1x = vx/magnitude(vx,vy);
+        var dir1y = vy/magnitude(vx,vy);
+        var dir2x = stroke[i+speed].x - stroke[i].x
+        var dir2y = stroke[i+speed].y - stroke[i].y
+        dir1x = dir1x*magnitude(dir2x, dir2y);
+        dir1y = dir1y*magnitude(dir2x, dir2y);
+
+        var angle = distance(stroke[i].x+dir1x,stroke[i].y+dir1y,stroke[i+speed].x,stroke[i+speed].y)/distance(stroke[i].x,stroke[i].y,stroke[i+speed].x,stroke[i+speed].y);
+        
+        if(angle>max_curve){
+            suball.push(sub);
+            sub.push(stroke[i]);
+            sub = [stroke[i]];
+            i= i + speed;
+            if(i>=stroke.length){
+                flag=0;
+                // sub = [stroke[i]];
+                break;
+            }
+            sub.push(stroke[i]);
+            i= i + speed;
+            if(i>=stroke.length){
+                flag=0;
+                // sub.push(stroke[i]);
+                break;
+            }
+            sub.push(stroke[i]);
+            i = i - 1;
+        }
+        i = i+1;
+    }
+    if(flag){
+        sub.push(stroke[stroke.length-1]);    
+    }
+    suball.push(sub);
+
+    console.log(suball.length);
+    console.log(suball);
+    return suball;
+};
+
+function distance(a,b,c,d){
+    return Math.sqrt(Math.pow(a-c,2)+Math.pow(b-d,2))+0.001;
+}
+
+function magnitude(x,y){
+    return Math.sqrt(Math.pow(x,2)+Math.pow(y,2))+0.001;
+}
+
+function resample(stroke){
+    var re = [stroke[0]];
+    var xl = stroke[0].x;
+    var yl = stroke[0].y;
+    var th = 5;//Math.sqrt(2);
+    var thup = 50
+    var s;
+    var i=1;
+    while(i<stroke.length){
+        var d = distance(xl,yl,stroke[i].x,stroke[i].y);
+        if(d>thup){
+            re.push(stroke[i]);
+            xl = stroke[i].x;
+            yl = stroke[i].y;
+            i++;
+            continue;
+        }
+        if(d<th){
+            // xl = stroke[i].x;
+            // yl = stroke[i].y;
+            i++;
+            continue;
+        }        
+        var dx = stroke[i].x - xl;
+        var dy = stroke[i].y - yl;
+        var mag = magnitude(dx,dy);
+        dx = (1.0*dx)/mag;
+        dy = (1.0*dy)/mag;
+        xl = xl + dx*th;
+        yl = yl + dy*th;
+        var s = stroke[i];
+        s.x = xl;
+        s.y = yl;
+        re.push(s);
+    }
+    if(re[re.length-1] != stroke[stroke.length-1]){
+        re.push(stroke[stroke.length-1]);
+    }
+    return re;
+};
+
+function dist(a,b,c,d){
+    return Math.abs(a-c) + Math.abs(b-d)+0.001;
+}
+
+
+
+	</script>	
+
+	<canvas id="canvas" rezise="true"></canvas>
+
+
+	
+  
+   </body>
+  </html>
