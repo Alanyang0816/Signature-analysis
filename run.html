@@ -1,6 +1,6 @@
 <html>
   <head>
-    <title>Homework 3</title>
+    <title>Signature Matching</title>
     <script src="http://code.jquery.com/jquery-latest.js"></script>
 	<script src="js/paper-full.js"></script>
 	<!--Fonts and styling-->
@@ -11,23 +11,14 @@
 <body>	
 	<script type="text/paperscript" canvas="canvas">
 
-var s1 = require('./data1.js');
-var s2 = require('./data2.js');
-var s3 = require('./data3.js');
-var s4 = require('./data4.js');
-var s5 = require('./data5.js');
-var s6 = require('./data6.js');
-var s7 = require('./data7.js');
-var s8 = require('./data8.js');
-var s9 = require('./data9.js');
-var s10 = require('./data10.js');
-
 
 var strokes = [];
-var time = [];
-var x = [];
-var y = [];
-
+var time = [], ct=[];
+var x = [],cx=[];
+var y = [],cy=[];
+var save_strokes = [];
+var flag = 0;
+var save_features = [];
 					
 function onMouseDown(event) {
 	path = new Path();
@@ -57,26 +48,89 @@ function onMouseUp(event) {
 function DetectionFunction(){
 	
 	diag = diag_len()
-	
+    cx = x
+    cy = y
+    ct = time
 	stroke = to_stroke(diag)
     stroke = resample(stroke);
 	segments = segment(stroke)
-	
-	
-	//norm_stroke = normalise(stroke,diag)
-	
+		
 	no_of_segments = segments.length
 	
 	avg_v = avg_speed(segments)
 
 	ratio_angles_seg = get_seg_ang(segments)
 
-	ratio_angles = Math.abs(total_abs_angle(stroke)/(total_angle(stroke)+0.1))
+    ratio_angles = Math.abs(total_abs_angle(stroke)/(total_angle(stroke)+0.1))
 
-	console.log(no_of_segments,avg_v,ratio_angles, ratio_angles_seg)
+    f1 = midPartRelativeAverageSpeed(cx,cy,ct)
+    f2 = averageRelativeSpeed(cx,cy,ct)
+    f3 = maxRelativeSpeed(cx,cy,ct)
+    f4 = diagonalAngle(cx,cy,ct)
+    f5 = totalTime(cx,cy,ct)
+    f6 = lengthOfDiagonal(cx,cy,ct)
+
+
+    all_features = [avg_v, ratio_angles_seg, no_of_segments, ratio_angles ,f1,f2,f3,f4,f5,f6]
+    
+    console.log('features:',all_features)
+
+
+    if(flag==0){
+        flag=1
+        save_strokes.push(strokes)
+        save_features.push(all_features)
+        console.log('saved')
+    }
+
+    else{
+        compare(all_features)
+    }
 	
 
 }
+
+
+function compare(all_features){
+
+    w=[5,5,1,3,300,300,1,5,1,1/20,1]
+
+    console.log('comparing')
+    console.log(all_features)
+    console.log(save_features)
+    old_features = save_features[0]
+    similarity = 0
+    for(i=0;i<old_features.length;i++){
+        console.log(i,all_features[i],old_features[i])
+        if(i<=1){
+            sim = 0
+
+            ll=Math.min(old_features[i].length,all_features[i].length)
+            for(j=0;j<ll;j++){
+
+                sim = sim + Math.min(2,Math.abs((old_features[i][j] - all_features[i][j])*w[i]))
+            }
+
+            //features_left = all_features[i]
+            //if(old_features[i].length > all_features[i].length){
+            //    features_left = old_features[i]
+            //}
+            //for(j=ll;j<features_left.length;j++){
+            //    sim = sim + Math.min(2,(Math.abs(features_left)*w[i]))
+                
+            //}
+
+            similarity+=Math.abs(sim)
+        }
+        else{
+
+            similarity = similarity + Math.abs((old_features[i]-all_features[i])*w[i] )
+        }
+    }
+    console.log(similarity)
+}
+
+
 
 function diag_len(){
     maxx = Math.max(x)
@@ -269,12 +323,129 @@ function dist(a,b,c,d){
 }
 
 
+function lengthOfDiagonal(x,y,time) {
+    xmax=-1*Math.pow(10, 10);
+    ymax=-1*Math.pow(10, 10);
+    xmin=Math.pow(10, 10);
+    ymin=Math.pow(10, 10);
+    for (i = 0; i < x.length; i++) {
+        if (x[i] < xmin) {
+            xmin = x[i]
+        }
+        if (x[i] > xmax) {
+            xmax = x[i]
+        }
+        if (y[i] < ymin) {
+            ymin = y[i]
+        }
+        if (y[i] > ymax) {
+            ymax = y[i]
+        }
+    }
+    diagnonal = Math.sqrt(Math.pow((ymax-ymin),2)+Math.pow((xmax-xmin),2))
+    return diagnonal;
+}
+
+function diagonalAngle(x,y,time) {
+    xmax=-1*Math.pow(10, 10);
+    ymax=-1*Math.pow(10, 10);
+    xmin=Math.pow(10, 10);
+    ymin=Math.pow(10, 10);
+    for (i = 0; i < x.length; i++) {
+        if (x[i] < xmin) {
+            xmin = x[i]
+        }
+        if (x[i] > xmax) {
+            xmax = x[i]
+        }
+        if (y[i] < ymin) {
+            ymin = y[i]
+        }
+        if (y[i] > ymax) {
+            ymax = y[i]
+        }
+    }
+    diagnonal_angle = Math.atan((ymax-ymin)/(xmax-xmin))
+    return diagnonal_angle;
+}
+
+function maxSpeed(x,y,time){
+    max_speed = 1
+    for (i = 0; i < x.length - 1; i++) {
+        speed = (Math.pow((x[i+1] - x[i]),2)+Math.pow((y[i+1] - y[i]),2))/Math.pow((time[i+1] - time[i]),2)
+        if (speed < 10000000000 && max_speed <  speed){
+            max_speed = speed
+        }
+    }
+    return max_speed;
+}
+
+function maxRelativeSpeed(x,y,time){
+    return maxSpeed(x,y,time) / (lengthOfDiagonal(x,y,time))
+}
+
+function averageSpeed(x,y,time) {
+    return lengthOfStroke(x,y,time) / totalTime(x,y,time);
+}
+
+function averageRelativeSpeed(x,y,time){
+    return averageSpeed(x,y,time) / lengthOfDiagonal(x,y,time)
+}
+function totalTime(x,y,time) {
+    total_time = time[time.length - 1]- time[0]
+        return total_time;
+}
+
+function lengthOfStroke(x,y,time){
+    sum = 0
+    for(i = 0;i < x.length - 1; i++){
+        sum = Math.sqrt(Math.pow((y[i+1] -y[i]),2) + Math.pow((x[i+1] -x[i]),2)) + sum
+    }
+    return sum;
+}
+
+//mid part(from one third of stroke to two third of stroke) average speed
+function midPartAverageSpeed(x,y,time) {
+    part1_l = Math.round((x.length - 1) / 3)
+    part2_l = Math.round((x.length -1)*2/3)
+    part_length = 0
+    for (i = part1_l ; i < part2_l; i++) {
+        part_length = Math.sqrt(Math.pow((y[i+1] - y[i]), 2) + Math.pow((x[i+1] - x[i]), 2)) + part_length
+    }
+
+    part_average_speed = part_length / (time[part2_l] - (time[part1_l]))
+        return part_average_speed
+}
+
+function midPartRelativeAverageSpeed(x,y,time){
+    return midPartAverageSpeed(x,y,time)/lengthOfDiagonal(x,y,time)
+}
+
+function highSpeedPoints(x,y,time){
+    output= []
+     tem = []
+     averSpeed= averageSpeed(x,y,time)
+    for( i = 0 ;i<x.length-1;i++){
+        if(((Math.pow((x[i+1] - x[i]),2)+Math.pow((y[i+1] - y[i]),2))/Math.pow((time[i+1] - time[i]),2)) > 2*averSpeed){
+            output.push(Math.round(i*100/x.length))
+        }
+    }
+    return output
+}
+
+
+
 
 	</script>	
 
 	<canvas id="canvas" rezise="true"></canvas>
 
-
+    midPartRelativeAverageSpeed
+    averageRelativeSpeed
+    maxRelativeSpeed
+    diagonalAngle
+    totalTime
+    lengthOfDiagonal
 	
   
    </body>
