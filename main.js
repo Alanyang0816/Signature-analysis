@@ -219,10 +219,3 @@ function matchHighSpeedPoints(x,y){
     return points
 }
 
-// console.log(mergeHighSpeedPoints)
-// console.log(highSpeedPoints(s6.x,s6.y,s6.time))
-// console.log(highSpeedPoints(s4.x,s4.y,s4.time))
-
-// console.log(matchHighSpeedPoints(highSpeedPoints(s3.x,s3.y,s3.time),highSpeedPoints(s13.x,s13.y,s13.time)))
-// console.log(matchHighSpeedPoints(highSpeedPoints(s1.x,s1.y,s1.time),highSpeedPoints(s2.x,s2.y,s2.time)))
-// console.log(matchHighSpeedPoints(mergeHighSpeedPoints,highSpeedPoints(s1.x,s1.y,s1.time)))
