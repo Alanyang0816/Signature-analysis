@@ -1,5 +1,5 @@
 Run the project:
-The run.html file needs to be run in the browser.
+The run.html file needs to be run in the browser. I suggest you to use Chrome. Just directly drag it into Chrome.
 The project is designed to save the first signature and then compare it with the signature done later and report a difference score. 
 The project reports a difference score hence it low for matching signatures that are done by the same person and different for signatures done by different person irrespective of their degree of match in appearance.
 The console can be opened for further information. 
