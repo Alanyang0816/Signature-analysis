@@ -8,6 +8,10 @@ var s7 = require('./data7.js');
 var s8 = require('./data8.js');
 var s9 = require('./data9.js');
 var s10 = require('./data10.js');
+var s11 = require('./data11.js');
+var s12 = require('./data12.js');
+var s13 = require('./data13.js');
+var ts1 = require('./testdata1.js');
 var input = require('./input.js');
 
 // length of Diagonal of boudning box
@@ -171,7 +175,54 @@ else
     console.log("Your signature can not be verified, you can try to use message or answer security questions to verify your identity ")
 
 
-console.log(mergeHighSpeedPoints)
-console.log(highSpeedPoints(input.x,input.y,input.time))
+function matchHighSpeedPoints(x,y){
+    let point = 0
+    if(x.length>y.length){
+        for(let i=0;i<y.length;i++){
+            if(y.includes(x[i])||y.includes(x[i]+1)||y.includes(x[i]+2)||y.includes(x[i]-1)||y.includes(x[i]-2)){
+                point++
+            }
+            else if(y.includes(x[i]+3)||y.includes(x[i]+4)||y.includes(x[i]-3)||y.includes(x[i]-4)){
+                point+=0.5
+            }
+            else{
+                point-=2
+            }
+        }
+    }
+    else{
+        for(let i=0;i<x.length;i++){
+            if(x.includes(y[i])||x.includes(y[i]+1)||x.includes(y[i]+2)||x.includes(y[i]-1)||x.includes(y[i]-2)){
+                point++
+            }
+            else if(x.includes(y[i]+3)||x.includes(y[i]+4)||x.includes(y[i]-3)||x.includes(y[i]-4)){
+                point+=0.5
+            }
+            else{
+                point--
+            }
+        }
+    }
+    let points = point/Math.min(y.length,x.length)
+    if(x.length>y.length*4||x.length<y.length*0.25){
+        points-= 0.5
+    }
+    if(x.length>y.length*3||x.length<y.length*0.33){
+        points-=0.3
+    }
+    else if(x.length>y.length*2||x.length<y.length*0.5){
+        points-=0.2
+    }
+    else if(x.length>y.length*1.5||x.length<y.length*0.66){
+        points-=0.1
+    }
+    return points
+}
 
+// console.log(mergeHighSpeedPoints)
+// console.log(highSpeedPoints(s6.x,s6.y,s6.time))
+// console.log(highSpeedPoints(s4.x,s4.y,s4.time))
 
+// console.log(matchHighSpeedPoints(highSpeedPoints(s3.x,s3.y,s3.time),highSpeedPoints(s13.x,s13.y,s13.time)))
+// console.log(matchHighSpeedPoints(highSpeedPoints(s1.x,s1.y,s1.time),highSpeedPoints(s2.x,s2.y,s2.time)))
+// console.log(matchHighSpeedPoints(mergeHighSpeedPoints,highSpeedPoints(s1.x,s1.y,s1.time)))
